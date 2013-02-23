@@ -362,6 +362,17 @@ class Entries(list):
             self.days = [d.day for d in bdt]
         self.comm = comm
 
+        self.hilite_tags = {
+            '#': {
+                'pattern': re.compile(r'(#\w+)'),
+                'replace': r'%s\1%s' % (fmt.s('underline'), fmt.s('normal')),
+            },
+            '@': {
+                'pattern': re.compile(r'(@\w+)'),
+                'replace': r'%s\1%s' % (fmt.s('bright'), fmt.s('normal')),
+            },
+        }
+
         # It's necessary to first create a whole list of entries because
         # otherwise comments would end up on wrong entries ...
         entries = []
@@ -404,6 +415,17 @@ class Entries(list):
             while len(self) > limit:
                 self.pop()
 
+
+    def _hilite(self, text, category='hash'):
+        try:
+            pattern = self.hilite_tags[category]['pattern']
+            replace = self.hilite_tags[category]['replace']
+            return re.sub(pattern, replace, text)
+        except KeyError:
+            # silently ignore invalid category
+            return text
+
+
     def __repr__(self):
         out = ""
         for entry in self:
@@ -437,6 +459,9 @@ class Entries(list):
                                   '        %s#' % fmt.bf('white', 'black'))
                 out += " %s%s%s" % (fmt.bf('white', 'black'), e or entry,
                                     fmt.r)
+
+            out = self._hilite(out, '#')
+            out = self._hilite(out, '@')
             out += '\n'
         return out.strip('\n')
 
